@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="form-container">
+    <h2 id="title">Login</h2>
+
+    <!-- Language Dropdown -->
+    <label for="language">🌐 <span id="lang-label">Select Language</span>:</label>
+    <select id="language" onchange="switchLanguage()">
+      <option value="en">English</option>
+      <option value="hi">Hindi</option>
+      <option value="ta">Tamil</option>
+    </select>
+
+    <form method="POST">
+      <label id="label-email" for="email_or_phone">Email or Phone:</label>
+      <input type="text" name="email_or_phone" id="email_or_phone">
+      <button type="button" onclick="startDictation('email_or_phone')">🎤</button>
+
+      <label id="label-password">Password:</label>
+      <input type="password" name="password" id="password">
+      <button type="button" onclick="startDictation('password')">🎤</button>
+
+      <button type="submit" id="submit-btn">Login</button>
+    </form>
+
+    <p><span id="new-user">New user?</span> <a href="/register" id="register-link">Register here</a></p>
+  </div>
+
+  <script>
+    // Translation dictionary
+    const translations = {
+      en: {
+        title: "Login",
+        langLabel: "Select Language",
+        email: "Email or Phone:",
+        password: "Password:",
+        submit: "Login",
+        newUser: "New user?",
+        registerLink: "Register here"
+      },
+      hi: {
+        title: "लॉगिन करें",
+        langLabel: "भाषा चुनें",
+        email: "ईमेल या फ़ोन:",
+        password: "पासवर्ड:",
+        submit: "लॉगिन",
+        newUser: "नया उपयोगकर्ता?",
+        registerLink: "यहां पंजीकरण करें"
+      },
+      ta: {
+        title: "உள்நுழை",
+        langLabel: "மொழியைத் தேர்ந்தெடுக்கவும்",
+        email: "மின்னஞ்சல் அல்லது கைபேசி:",
+        password: "கடவுச்சொல்:",
+        submit: "உள்நுழை",
+        newUser: "புதிய பயனர்?",
+        registerLink: "இங்கே பதிவு செய்யவும்"
+      }
+    };
+
+    function switchLanguage() {
+      const lang = document.getElementById('language').value;
+      localStorage.setItem("preferredLang", lang); // Remember language
+
+      document.getElementById("title").innerText = translations[lang].title;
+      document.getElementById("lang-label").innerText = translations[lang].langLabel;
+      document.getElementById("label-email").innerText = translations[lang].email;
+      document.getElementById("label-password").innerText = translations[lang].password;
+      document.getElementById("submit-btn").innerText = translations[lang].submit;
+      document.getElementById("new-user").innerText = translations[lang].newUser;
+      document.getElementById("register-link").innerText = translations[lang].registerLink;
+    }
+
+    // Auto-set preferred language on load
+    window.onload = () => {
+      const lang = localStorage.getItem("preferredLang") || "en";
+      document.getElementById("language").value = lang;
+      switchLanguage();
+    };
+
+    function startDictation(fieldId) {
+      const recognition = new webkitSpeechRecognition();
+      const langMap = { en: "en-IN", hi: "hi-IN", ta: "ta-IN" };
+      const selectedLang = document.getElementById("language").value;
+      recognition.lang = langMap[selectedLang] || "en-IN";
+
+      recognition.onresult = function(event) {
+        document.getElementById(fieldId).value = event.results[0][0].transcript;
+      };
+
+      recognition.onerror = function(event) {
+        alert("Speech recognition error: " + event.error);
+      };
+
+      recognition.start();
+    }
+  </script>
+</body>
+</html>
