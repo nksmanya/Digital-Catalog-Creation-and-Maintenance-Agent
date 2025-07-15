@@ -3,32 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Catalog Agent - Login</title>
+  <title>Register - Digital Catalog Agent</title>
   <style>
     body {
       font-family: "Arial", sans-serif;
-      background-color: #f2f2f2;
+      background-color: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
 
-    .login-container {
+    .register-container {
       background: white;
       padding: 2em;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       width: 90%;
-      max-width: 350px;
+      max-width: 380px;
     }
 
-    .login-container h2 {
+    h2 {
       text-align: center;
       margin-bottom: 1em;
     }
 
-    input[type="tel"], input[type="text"] {
+    input[type="text"], input[type="tel"] {
       width: 100%;
       padding: 12px;
       margin-bottom: 1em;
@@ -40,12 +41,17 @@
     button {
       width: 100%;
       padding: 12px;
-      background-color: #28a745;
+      background-color: #007bff;
       color: white;
       border: none;
       border-radius: 6px;
       font-size: 1em;
       cursor: pointer;
+    }
+
+    .secondary-btn {
+      background-color: #28a745;
+      margin-top: 0.5em;
     }
 
     .lang-toggle, .voice-button {
@@ -54,46 +60,61 @@
       font-size: 0.9em;
     }
 
-    .voice-button button {
-      background: #007bff;
-      margin-top: 0.5em;
+    .lang-toggle a {
+      text-decoration: none;
+      color: #007bff;
     }
 
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Login</h2>
-    <input type="tel" placeholder="Enter your mobile number" id="phone" required>
-    <button onclick="sendOTP()">Send OTP</button>
-
-    <input type="text" placeholder="Enter OTP" id="otp" style="display:none;">
-    <button onclick="verifyOTP()" id="verifyBtn" style="display:none;">Verify & Login</button>
+  <div class="register-container">
+    <h2>Register</h2>
+    
+    <input type="text" placeholder="Full Name" id="name" required />
+    <input type="text" placeholder="Business Name (optional)" id="business" />
+    <input type="tel" placeholder="Mobile Number" id="phone" required />
+    
+    <button onclick="sendRegisterOTP()">Send OTP</button>
+    
+    <input type="text" placeholder="Enter OTP" id="otp" style="display:none;" />
+    <button onclick="verifyRegisterOTP()" id="verifyBtn" class="secondary-btn" style="display:none;">Verify & Register</button>
 
     <div class="lang-toggle">
       🌐 <a href="#">Change Language</a>
     </div>
-    
+
     <div class="voice-button">
-      🎙️ <button onclick="startVoiceLogin()">Use Voice to Login</button>
+      🎙️ <button onclick="startVoiceRegistration()" class="secondary-btn">Use Voice to Register</button>
     </div>
   </div>
 
   <script>
-    function sendOTP() {
+    function sendRegisterOTP() {
+      const phone = document.getElementById("phone").value;
+      if (phone.length < 10) {
+        alert("Please enter a valid mobile number.");
+        return;
+      }
       document.getElementById("otp").style.display = "block";
       document.getElementById("verifyBtn").style.display = "block";
-      alert("OTP sent to your mobile!");
+      alert("OTP sent to " + phone);
     }
 
-    function verifyOTP() {
-      // In real implementation, verify OTP with backend
-      alert("Login successful!");
+    function verifyRegisterOTP() {
+      // Replace with actual backend OTP verification
+      const name = document.getElementById("name").value;
+      if (!name) {
+        alert("Please enter your full name.");
+        return;
+      }
+      alert("Welcome, " + name + "! Registration successful.");
+      // Redirect or save data
     }
 
-    function startVoiceLogin() {
-      alert("Voice login feature coming soon!");
-      // Future: Use SpeechRecognition API here
+    function startVoiceRegistration() {
+      alert("Voice registration coming soon.");
+      // Future: Use SpeechRecognition API
     }
   </script>
 </body>
