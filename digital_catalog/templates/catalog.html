@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Catalog</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-add {
+      background-color: green;
+      color: white;
+    }
+
+    .btn-logout {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .catalog-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 0 10px #ccc;
+    }
+
+    .catalog-table th, .catalog-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    .catalog-table th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-delete {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-edit {
+      background-color: #ffc107;
+      color: white;
+      margin-left: 5px;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .no-products {
+      text-align: center;
+      color: #666;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <h1>📦 Product Catalog</h1>
+    <a href="{{ url_for('logout') }}" class="btn btn-logout">Logout</a>
+  </div>
+
+  <a href="{{ url_for('add_product') }}" class="btn btn-add">➕ Add New Product</a>
+
+  {% if products %}
+    <table class="catalog-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Price (₹)</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ product[0] }}</td>
+          <td>{{ product[1] }}</td>
+          <td>{{ product[2] }}</td>
+          <td>{{ product[3] }}</td>
+          <td>{{ product[4] }}</td>
+          <td>
+            <a href="{{ url_for('add_product') }}" class="btn btn-add">➕ Add New Product</a>
+<a href="{{ url_for('delete_product', id=product[0]) }}" class="btn btn-delete">🗑️ Delete</a>
+<a href="{{ url_for('edit_product', id=product[0]) }}" class="btn btn-edit">✏️ Edit</a>
+
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="no-products">No products found in the catalog.</div>
+  {% endif %}
+
+</body>
+</html>

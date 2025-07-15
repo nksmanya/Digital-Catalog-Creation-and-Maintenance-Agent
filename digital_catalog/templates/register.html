@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digital Catalog Agent - Login</title>
+  <style>
+    body {
+      font-family: "Arial", sans-serif;
+      background-color: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background: white;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 350px;
+    }
+
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 1em;
+    }
+
+    input[type="tel"], input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 1em;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1em;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    .lang-toggle, .voice-button {
+      margin-top: 1em;
+      text-align: center;
+      font-size: 0.9em;
+    }
+
+    .voice-button button {
+      background: #007bff;
+      margin-top: 0.5em;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Login</h2>
+    <input type="tel" placeholder="Enter your mobile number" id="phone" required>
+    <button onclick="sendOTP()">Send OTP</button>
+
+    <input type="text" placeholder="Enter OTP" id="otp" style="display:none;">
+    <button onclick="verifyOTP()" id="verifyBtn" style="display:none;">Verify & Login</button>
+
+    <div class="lang-toggle">
+      🌐 <a href="#">Change Language</a>
+    </div>
+    
+    <div class="voice-button">
+      🎙️ <button onclick="startVoiceLogin()">Use Voice to Login</button>
+    </div>
+  </div>
+
+  <script>
+    function sendOTP() {
+      document.getElementById("otp").style.display = "block";
+      document.getElementById("verifyBtn").style.display = "block";
+      alert("OTP sent to your mobile!");
+    }
+
+    function verifyOTP() {
+      // In real implementation, verify OTP with backend
+      alert("Login successful!");
+    }
+
+    function startVoiceLogin() {
+      alert("Voice login feature coming soon!");
+      // Future: Use SpeechRecognition API here
+    }
+  </script>
+</body>
+</html>
