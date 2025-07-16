@@ -5,60 +5,145 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{ text.chatbot_title }}</title>
   <style>
-    /* your existing styles */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('static/grass.jpg');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+
+    .chat-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2e7d32;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .controls select, .controls button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    #chatOutput {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 6px;
+      min-height: 100px;
+      white-space: pre-wrap;
+      border: 1px solid #c8e6c9;
+      margin-bottom: 15px;
+    }
+
+    #chatInput, #sendBtn {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 14px;
+    }
 
     #chatInput {
-      width: 70%;
-      padding: 8px;
-      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 8px;
     }
+
     #sendBtn {
-      padding: 8px 12px;
-      margin-left: 5px;
+      background-color: #43a047;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
       cursor: pointer;
     }
+
+    #sendBtn:hover {
+      background-color: #388e3c;
+    }
+
     #imageUpload {
       margin-top: 10px;
-      display: none; /* Show only during image step */
+      display: none;
+      width: 100%;
     }
+
+    h4 {
+      margin-top: 30px;
+      color: #2e7d32;
+    }
+
+    #productList {
+      background: #fff;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 14px;
+    }
+
     #productList img {
-      max-width: 100px;
-      max-height: 80px;
+      max-width: 80px;
+      max-height: 60px;
       vertical-align: middle;
-      margin-right: 10px;
+      margin-right: 8px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <h3>{{ text.chatbot_title }}</h3>
+  <div class="chat-container">
+    <h3>{{ text.chatbot_title }}</h3>
 
-  <div class="controls">
-    <select id="langSelect" onchange="changeLang()">
-      <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
-      <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
-      <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
-    </select>
+    <div class="controls">
+      <select id="langSelect" onchange="changeLang()">
+        <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+        <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
+        <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
+      </select>
 
-    <button onclick="startChat()">🎤 {{ text.ask_something }}</button>
+      <button onclick="startChat()">🎤 {{ text.ask_something }}</button>
+    </div>
+
+    <pre id="chatOutput"></pre>
+
+    <input type="text" id="chatInput" placeholder="{{ text.type_something }}" />
+    <button id="sendBtn" onclick="sendTypedInput()">Send</button>
+
+    <input type="file" id="imageUpload" accept="image/*" />
+
+    <h4>Products List:</h4>
+    <div id="productList">Loading products...</div>
   </div>
 
-  <pre id="chatOutput"></pre>
-
-  <!-- Text input for typed user messages -->
-  <input type="text" id="chatInput" placeholder="{{ text.type_something }}" />
-  <button id="sendBtn" onclick="sendTypedInput()">Send</button>
-
-  <!-- Image upload input (hidden until needed) -->
-  <input type="file" id="imageUpload" accept="image/*" />
-
-  <h4>Products List:</h4>
-  <div id="productList" style="background:#fff; border:1px solid #a5d6a7; border-radius:8px; padding:10px; max-height:300px; overflow-y:auto;">
-    Loading products...
-  </div>
-
+  <!-- JavaScript (unchanged logic) -->
   <script>
     let currentChatLang = "{{ lang }}";
-
     let addProductState = null;
     let newProduct = { name: '', description: '', price: '', stock: '', category: '', imageBase64: '' };
 
@@ -107,7 +192,6 @@
       }[lang];
     }
 
-    // Unified function to process input from text or voice
     function processUserInput(userInputRaw) {
       const userInput = userInputRaw.toLowerCase();
 
@@ -120,13 +204,11 @@
 
         if (addProductKeywords[currentChatLang].some(k => userInput.includes(k))) {
           addProductState = "name";
-
           const askProductNameText = {
             en: "Please tell me the product name.",
             hi: "कृपया उत्पाद का नाम बताएं।",
             ta: "தயவுசெய்து பொருளின் பெயரை கூறவும்."
           };
-
           speakText(askProductNameText[currentChatLang], currentChatLang);
           document.getElementById("chatOutput").textContent = `🗣️ ${userInputRaw}\n🤖 ${askProductNameText[currentChatLang]}`;
         } else {
@@ -135,7 +217,6 @@
           speakText(response, currentChatLang);
         }
       } else {
-        // Product adding flow including image upload step
         switch(addProductState) {
           case "name":
             newProduct.name = userInputRaw;
@@ -147,7 +228,6 @@
             }[currentChatLang], currentChatLang);
             document.getElementById("chatOutput").textContent = `🗣️ Product Name: ${userInputRaw}\n🤖 Please provide the description.`;
             break;
-
           case "description":
             newProduct.description = userInputRaw;
             addProductState = "price";
@@ -158,7 +238,6 @@
             }[currentChatLang], currentChatLang);
             document.getElementById("chatOutput").textContent = `🗣️ Description: ${userInputRaw}\n🤖 What is the price?`;
             break;
-
           case "price":
             newProduct.price = userInputRaw;
             addProductState = "stock";
@@ -169,7 +248,6 @@
             }[currentChatLang], currentChatLang);
             document.getElementById("chatOutput").textContent = `🗣️ Price: ${userInputRaw}\n🤖 How many items are in stock?`;
             break;
-
           case "stock":
             newProduct.stock = userInputRaw;
             addProductState = "category";
@@ -180,13 +258,9 @@
             }[currentChatLang], currentChatLang);
             document.getElementById("chatOutput").textContent = `🗣️ Stock: ${userInputRaw}\n🤖 What is the product category?`;
             break;
-
           case "category":
             newProduct.category = userInputRaw;
-
-            // Show image upload input now
-            document.getElementById('imageUpload').style.display = 'inline-block';
-
+            document.getElementById('imageUpload').style.display = 'block';
             addProductState = "image";
             const askImageText = {
               en: "Please upload an image of the product.",
@@ -196,15 +270,10 @@
             speakText(askImageText[currentChatLang], currentChatLang);
             document.getElementById("chatOutput").textContent = `🗣️ Category: ${userInputRaw}\n🤖 ${askImageText[currentChatLang]}`;
             break;
-
-          case "image":
-            // This state is handled by file input change event (below)
-            break;
         }
       }
     }
 
-    // Called when user clicks Send button for typed input
     function sendTypedInput() {
       const inputBox = document.getElementById('chatInput');
       const userInputRaw = inputBox.value.trim();
@@ -213,7 +282,6 @@
       inputBox.value = '';
     }
 
-    // Speech recognition setup (same as before)
     function startChat() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -224,13 +292,11 @@
       recognition.lang = { en: "en-IN", hi: "hi-IN", ta: "ta-IN" }[currentChatLang] || "en-IN";
 
       recognition.start();
-
       recognition.onresult = function(event) {
         const userInputRaw = event.results[0][0].transcript.trim();
         processUserInput(userInputRaw);
       };
-
-      recognition.onerror = function(event) {
+      recognition.onerror = function() {
         speakText({
           en: "Sorry, I couldn't hear you. Please try again.",
           hi: "माफ़ कीजिए, मैं आपकी आवाज़ सुन नहीं पाई। कृपया फिर से कोशिश करें।",
@@ -239,17 +305,12 @@
       };
     }
 
-    // Handle image upload input change event
     document.getElementById('imageUpload').addEventListener('change', function(event) {
       const file = event.target.files[0];
-      if (!file) {
-        alert("No file selected.");
-        return;
-      }
+      if (!file) return;
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        // e.target.result is base64 image string
         newProduct.imageBase64 = e.target.result;
 
         const confirmMsg = {
@@ -260,10 +321,8 @@
         speakText(confirmMsg, currentChatLang);
         document.getElementById("chatOutput").textContent += `\n🤖 ${confirmMsg}`;
 
-        // Hide image upload after selection
         document.getElementById('imageUpload').style.display = 'none';
 
-        // Send product data including imageBase64 to backend
         fetch('/add_product', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -304,7 +363,6 @@
           document.getElementById("chatOutput").textContent += "\n🤖 " + errorMsg[currentChatLang];
         });
 
-        // Reset flow state
         addProductState = null;
         newProduct = { name: '', description: '', price: '', stock: '', category: '', imageBase64: '' };
       };
@@ -319,7 +377,6 @@
           if (data.products && data.products.length > 0) {
             let html = '<ul style="list-style:none; padding-left:0;">';
             data.products.forEach(p => {
-              // If image available, show thumbnail
               const imgTag = p.imageBase64 ? `<img src="${p.imageBase64}" alt="${p.name}"/>` : '';
               html += `<li style="margin-bottom:8px;">${imgTag}<b>${p.name}</b> — ${p.description} | ₹${p.price} | Stock: ${p.stock} | Category: ${p.category}</li>`;
             });

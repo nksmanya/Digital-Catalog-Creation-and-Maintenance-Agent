@@ -124,15 +124,22 @@
     <div class="left-header">
       <h2>{{ text.dashboard_title }}</h2>
     </div>
+  <a href="/chatbot">
+  <button style="background-color: #4caf50;margin-left: 700px; color: white; padding: 10px 16px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;">
+    🤖 Open AI Chatbot
+  </button>
+</a>
     <div class="right-header">
       <select id="langSelect" onchange="changeLanguage(this.value)">
         <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
         <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
         <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
       </select>
+      
       <div id="profile">
         👤 <span id="userName">{{ user }}</span>
         <a href="/logout"><button>{{ text.logout }}</button></a>
+ 
       </div>
     </div>
   </header>
@@ -173,11 +180,7 @@
   </div>
 
   <!-- Chatbot button -->
-  <a href="/chatbot">
-  <button style="background-color: #4caf50;margin-left: 28px; color: white; padding: 10px 16px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;">
-    🤖 Open AI Chatbot
-  </button>
-</a>
+
  <script>
     function changeLanguage(lang) {
       fetch("/set_language", {
