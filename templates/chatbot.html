@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ text.chatbot_title }}</title>
+  <style>
+    /* your existing styles */
+
+    #chatInput {
+      width: 70%;
+      padding: 8px;
+      margin-top: 10px;
+    }
+    #sendBtn {
+      padding: 8px 12px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+    #imageUpload {
+      margin-top: 10px;
+      display: none; /* Show only during image step */
+    }
+    #productList img {
+      max-width: 100px;
+      max-height: 80px;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h3>{{ text.chatbot_title }}</h3>
+
+  <div class="controls">
+    <select id="langSelect" onchange="changeLang()">
+      <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+      <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
+      <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
+    </select>
+
+    <button onclick="startChat()">🎤 {{ text.ask_something }}</button>
+  </div>
+
+  <pre id="chatOutput"></pre>
+
+  <!-- Text input for typed user messages -->
+  <input type="text" id="chatInput" placeholder="{{ text.type_something }}" />
+  <button id="sendBtn" onclick="sendTypedInput()">Send</button>
+
+  <!-- Image upload input (hidden until needed) -->
+  <input type="file" id="imageUpload" accept="image/*" />
+
+  <h4>Products List:</h4>
+  <div id="productList" style="background:#fff; border:1px solid #a5d6a7; border-radius:8px; padding:10px; max-height:300px; overflow-y:auto;">
+    Loading products...
+  </div>
+
+  <script>
+    let currentChatLang = "{{ lang }}";
+
+    let addProductState = null;
+    let newProduct = { name: '', description: '', price: '', stock: '', category: '', imageBase64: '' };
+
+    const chatbotReplies = {
+      en: {
+        "hello": "Hello! How can I help you today?",
+        "add product": "You can add products from the dashboard. What is the product name?",
+        "logout": "Click on logout button on the top right.",
+      },
+      hi: {
+        "नमस्ते": "नमस्ते! मैं आपकी कैसे मदद कर सकती हूँ?",
+        "उत्पाद जोड़ें": "डैशबोर्ड से उत्पाद जोड़ सकते हैं। कृपया उत्पाद का नाम बताएं।",
+        "लॉगआउट": "ऊपर दाईं ओर लॉगआउट पर क्लिक करें।",
+      },
+      ta: {
+        "வணக்கம்": "வணக்கம்! உங்களுக்கு எப்படி உதவலாம்?",
+        "பொருள் சேர்க்க": "டாஷ்போர்டில் பொருட்களை சேர்க்கலாம். தயவுசெய்து பொருளின் பெயரை கூறவும்.",
+        "வெளியேறு": "மேல் வலதுபுறம் உள்ள Logout பொத்தானை அழுத்தவும்.",
+      }
+    };
+
+    function changeLang() {
+      currentChatLang = document.getElementById('langSelect').value;
+      addProductState = null;
+      newProduct = { name: '', description: '', price: '', stock: '', category: '', imageBase64: '' };
+      document.getElementById("chatOutput").textContent = "";
+      document.getElementById('imageUpload').style.display = 'none';
+      document.getElementById('chatInput').value = '';
+    }
+
+    function speakText(text, lang) {
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = { en: "en-IN", hi: "hi-IN", ta: "ta-IN" }[lang] || "en-IN";
+      speechSynthesis.speak(msg);
+    }
+
+    function getChatbotResponse(input, lang) {
+      const responses = chatbotReplies[lang] || {};
+      for (const key in responses) {
+        if (input.includes(key)) return responses[key];
+      }
+      return {
+        en: "Sorry, I didn’t understand.",
+        hi: "माफ़ कीजिए, मैं समझ नहीं पाई।",
+        ta: "மன்னிக்கவும், புரியவில்லை.",
+      }[lang];
+    }
+
+    // Unified function to process input from text or voice
+    function processUserInput(userInputRaw) {
+      const userInput = userInputRaw.toLowerCase();
+
+      if (!addProductState) {
+        const addProductKeywords = {
+          en: ["add product"],
+          hi: ["उत्पाद जोड़ें"],
+          ta: ["பொருள் சேர்க்க"]
+        };
+
+        if (addProductKeywords[currentChatLang].some(k => userInput.includes(k))) {
+          addProductState = "name";
+
+          const askProductNameText = {
+            en: "Please tell me the product name.",
+            hi: "कृपया उत्पाद का नाम बताएं।",
+            ta: "தயவுசெய்து பொருளின் பெயரை கூறவும்."
+          };
+
+          speakText(askProductNameText[currentChatLang], currentChatLang);
+          document.getElementById("chatOutput").textContent = `🗣️ ${userInputRaw}\n🤖 ${askProductNameText[currentChatLang]}`;
+        } else {
+          const response = getChatbotResponse(userInput, currentChatLang);
+          document.getElementById("chatOutput").textContent = `🗣️ ${userInputRaw}\n🤖 ${response}`;
+          speakText(response, currentChatLang);
+        }
+      } else {
+        // Product adding flow including image upload step
+        switch(addProductState) {
+          case "name":
+            newProduct.name = userInputRaw;
+            addProductState = "description";
+            speakText({
+              en: "Got it. Now please provide the description.",
+              hi: "ठीक है। अब कृपया विवरण दें।",
+              ta: "சரி. இப்போது விளக்கத்தை கூறவும்."
+            }[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent = `🗣️ Product Name: ${userInputRaw}\n🤖 Please provide the description.`;
+            break;
+
+          case "description":
+            newProduct.description = userInputRaw;
+            addProductState = "price";
+            speakText({
+              en: "Thanks. What is the price?",
+              hi: "धन्यवाद। कीमत क्या है?",
+              ta: "நன்றி. விலை என்ன?"
+            }[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent = `🗣️ Description: ${userInputRaw}\n🤖 What is the price?`;
+            break;
+
+          case "price":
+            newProduct.price = userInputRaw;
+            addProductState = "stock";
+            speakText({
+              en: "How many items are in stock?",
+              hi: "स्टॉक में कितने आइटम हैं?",
+              ta: "சில பொருட்கள் கிடையா?"
+            }[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent = `🗣️ Price: ${userInputRaw}\n🤖 How many items are in stock?`;
+            break;
+
+          case "stock":
+            newProduct.stock = userInputRaw;
+            addProductState = "category";
+            speakText({
+              en: "Finally, what is the product category?",
+              hi: "अंत में, उत्पाद की श्रेणी क्या है?",
+              ta: "இறுதியில், பொருள் வகை என்ன?"
+            }[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent = `🗣️ Stock: ${userInputRaw}\n🤖 What is the product category?`;
+            break;
+
+          case "category":
+            newProduct.category = userInputRaw;
+
+            // Show image upload input now
+            document.getElementById('imageUpload').style.display = 'inline-block';
+
+            addProductState = "image";
+            const askImageText = {
+              en: "Please upload an image of the product.",
+              hi: "कृपया उत्पाद की एक छवि अपलोड करें।",
+              ta: "தயவுசெய்து பொருளின் படத்தை பதிவேற்றவும்."
+            };
+            speakText(askImageText[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent = `🗣️ Category: ${userInputRaw}\n🤖 ${askImageText[currentChatLang]}`;
+            break;
+
+          case "image":
+            // This state is handled by file input change event (below)
+            break;
+        }
+      }
+    }
+
+    // Called when user clicks Send button for typed input
+    function sendTypedInput() {
+      const inputBox = document.getElementById('chatInput');
+      const userInputRaw = inputBox.value.trim();
+      if (!userInputRaw) return;
+      processUserInput(userInputRaw);
+      inputBox.value = '';
+    }
+
+    // Speech recognition setup (same as before)
+    function startChat() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech Recognition is not supported in this browser.");
+        return;
+      }
+      const recognition = new SpeechRecognition();
+      recognition.lang = { en: "en-IN", hi: "hi-IN", ta: "ta-IN" }[currentChatLang] || "en-IN";
+
+      recognition.start();
+
+      recognition.onresult = function(event) {
+        const userInputRaw = event.results[0][0].transcript.trim();
+        processUserInput(userInputRaw);
+      };
+
+      recognition.onerror = function(event) {
+        speakText({
+          en: "Sorry, I couldn't hear you. Please try again.",
+          hi: "माफ़ कीजिए, मैं आपकी आवाज़ सुन नहीं पाई। कृपया फिर से कोशिश करें।",
+          ta: "மன்னிக்கவும், உங்கள் குரலை கேட்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+        }[currentChatLang], currentChatLang);
+      };
+    }
+
+    // Handle image upload input change event
+    document.getElementById('imageUpload').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (!file) {
+        alert("No file selected.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // e.target.result is base64 image string
+        newProduct.imageBase64 = e.target.result;
+
+        const confirmMsg = {
+          en: `Adding product named ${newProduct.name} with image.`,
+          hi: `${newProduct.name} नामक उत्पाद छवि के साथ जोड़ा जा रहा है।`,
+          ta: `${newProduct.name} என்ற பொருள் படம் உடன் சேர்க்கப்படுகிறது.`
+        }[currentChatLang];
+        speakText(confirmMsg, currentChatLang);
+        document.getElementById("chatOutput").textContent += `\n🤖 ${confirmMsg}`;
+
+        // Hide image upload after selection
+        document.getElementById('imageUpload').style.display = 'none';
+
+        // Send product data including imageBase64 to backend
+        fetch('/add_product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newProduct.name,
+            description: newProduct.description,
+            price: parseFloat(newProduct.price) || 0,
+            stock: parseInt(newProduct.stock) || 0,
+            category: newProduct.category,
+            imageBase64: newProduct.imageBase64
+          })
+        }).then(res => {
+          if (res.ok) {
+            const successMsg = {
+              en: "Product added successfully.",
+              hi: "उत्पाद सफलतापूर्वक जोड़ा गया।",
+              ta: "பொருள் வெற்றிகரமாக சேர்க்கப்பட்டது."
+            };
+            speakText(successMsg[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent += "\n🤖 " + successMsg[currentChatLang];
+            loadProducts();
+          } else {
+            const failMsg = {
+              en: "Failed to add product.",
+              hi: "उत्पाद जोड़ने में विफल।",
+              ta: "பொருள் சேர்க்க முடியவில்லை."
+            };
+            speakText(failMsg[currentChatLang], currentChatLang);
+            document.getElementById("chatOutput").textContent += "\n🤖 " + failMsg[currentChatLang];
+          }
+        }).catch(() => {
+          const errorMsg = {
+            en: "Error connecting to server.",
+            hi: "सर्वर से कनेक्ट करने में त्रुटि।",
+            ta: "சர்வருடன் இணைக்கும் போது பிழை."
+          };
+          speakText(errorMsg[currentChatLang], currentChatLang);
+          document.getElementById("chatOutput").textContent += "\n🤖 " + errorMsg[currentChatLang];
+        });
+
+        // Reset flow state
+        addProductState = null;
+        newProduct = { name: '', description: '', price: '', stock: '', category: '', imageBase64: '' };
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    function loadProducts() {
+      fetch('/api/products')
+        .then(res => res.json())
+        .then(data => {
+          if (data.products && data.products.length > 0) {
+            let html = '<ul style="list-style:none; padding-left:0;">';
+            data.products.forEach(p => {
+              // If image available, show thumbnail
+              const imgTag = p.imageBase64 ? `<img src="${p.imageBase64}" alt="${p.name}"/>` : '';
+              html += `<li style="margin-bottom:8px;">${imgTag}<b>${p.name}</b> — ${p.description} | ₹${p.price} | Stock: ${p.stock} | Category: ${p.category}</li>`;
+            });
+            html += '</ul>';
+            document.getElementById('productList').innerHTML = html;
+          } else {
+            document.getElementById('productList').textContent = 'No products added yet.';
+          }
+        })
+        .catch(() => {
+          document.getElementById('productList').textContent = 'Failed to load products.';
+        });
+    }
+
+    window.onload = loadProducts;
+  </script>
+</body>
+</html>

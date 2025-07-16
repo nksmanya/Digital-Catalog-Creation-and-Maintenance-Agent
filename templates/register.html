@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{ text.register }}</title>
+</head>
+<body>
+  <h2>{{ text.register }}</h2>
+
+  <form action="/register" method="POST">
+    <label for="role">{{ text.role }}</label>
+    <select name="role" id="role" required>
+      <option value="farmer">{{ text.farmer }}</option>
+      <option value="kirana">{{ text.kirana }}</option>
+      <option value="artisan">{{ text.artisan }}</option>
+    </select><br><br>
+
+    <label for="email">{{ text.email }}</label>
+    <input type="email" name="email" id="email" required>
+    <button type="button" onclick="startSpeech('email')">🎤</button><br><br>
+
+    <label for="phone">{{ text.phone }}</label>
+    <input type="tel" name="phone" id="phone" required>
+    <button type="button" onclick="startSpeech('phone')">🎤</button><br><br>
+
+    <label for="password">{{ text.password }}</label>
+    <input type="password" name="password" id="password" required>
+    <button type="button" onclick="startSpeech('password')">🎤</button><br><br>
+
+    <button type="submit">{{ text.register }}</button>
+  </form>
+
+  <p>{{ text.have_account }} <a href="/login">{{ text.login_here }}</a></p>
+
+  <label>{{ text.language }}</label>
+  <select onchange="changeLanguage(this.value)">
+    <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+    <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
+    <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
+  </select>
+
+  <button onclick="speakInstructions()">🔊 {{ text.read_instructions }}</button>
+
+  <script>
+    const selectedLang = "{{ lang }}";
+
+    // ---------- Language Switch ----------
+    function changeLanguage(lang) {
+      fetch("/set_language", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang })
+      }).then(() => location.reload());
+    }
+
+    // ---------- Speech-to-Text ----------
+    function startSpeech(fieldId) {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = selectedLang === 'hi' ? 'hi-IN' : selectedLang === 'ta' ? 'ta-IN' : 'en-IN';
+      recognition.start();
+
+      recognition.onresult = function (event) {
+        document.getElementById(fieldId).value = event.results[0][0].transcript;
+      };
+
+      recognition.onerror = function (event) {
+        alert('Speech recognition error: ' + event.error);
+      };
+    }
+
+    // ---------- Text-to-Speech Instructions ----------
+    function speakInstructions() {
+      const messages = {
+        en: "Please select your role, and enter your email, phone number, and password. You may also use the microphone to enter information using your voice.",
+        hi: "कृपया अपनी भूमिका चुनें, और ईमेल, फोन नंबर और पासवर्ड दर्ज करें। आप आवाज़ से जानकारी दर्ज करने के लिए माइक्रोफ़ोन का उपयोग कर सकते हैं।",
+        ta: "தயவுசெய்து உங்கள் பங்கை தேர்வுசெய்து, மின்னஞ்சல், தொலைபேசி எண் மற்றும் கடவுச்சொல்லை உள்ளிடவும். 🎤 ஐ கிளிக் செய்து குரல் உள்ளீட்டை பயன்படுத்தலாம்."
+      };
+
+      const message = messages[selectedLang] || messages.en;
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = selectedLang === 'hi' ? 'hi-IN' : selectedLang === 'ta' ? 'en-IN' : 'en-IN';
+      window.speechSynthesis.speak(utterance);
+    }
+  </script>
+</body>
+</html>

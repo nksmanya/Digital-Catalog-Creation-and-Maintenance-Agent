@@ -1,104 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-  <div class="form-container">
-    <h2 id="title">Login</h2>
-
-    <!-- Language Dropdown -->
-    <label for="language">🌐 <span id="lang-label">Select Language</span>:</label>
-    <select id="language" onchange="switchLanguage()">
-      <option value="en">English</option>
-      <option value="hi">Hindi</option>
-      <option value="ta">Tamil</option>
-    </select>
-
-    <form method="POST">
-      <label id="label-email" for="email_or_phone">Email or Phone:</label>
-      <input type="text" name="email_or_phone" id="email_or_phone">
-      <button type="button" onclick="startDictation('email_or_phone')">🎤</button>
-
-      <label id="label-password">Password:</label>
-      <input type="password" name="password" id="password">
-      <button type="button" onclick="startDictation('password')">🎤</button>
-
-      <button type="submit" id="submit-btn">Login</button>
-    </form>
-
-    <p><span id="new-user">New user?</span> <a href="/register" id="register-link">Register here</a></p>
-  </div>
-
-  <script>
-    // Translation dictionary
-    const translations = {
-      en: {
-        title: "Login",
-        langLabel: "Select Language",
-        email: "Email or Phone:",
-        password: "Password:",
-        submit: "Login",
-        newUser: "New user?",
-        registerLink: "Register here"
-      },
-      hi: {
-        title: "लॉगिन करें",
-        langLabel: "भाषा चुनें",
-        email: "ईमेल या फ़ोन:",
-        password: "पासवर्ड:",
-        submit: "लॉगिन",
-        newUser: "नया उपयोगकर्ता?",
-        registerLink: "यहां पंजीकरण करें"
-      },
-      ta: {
-        title: "உள்நுழை",
-        langLabel: "மொழியைத் தேர்ந்தெடுக்கவும்",
-        email: "மின்னஞ்சல் அல்லது கைபேசி:",
-        password: "கடவுச்சொல்:",
-        submit: "உள்நுழை",
-        newUser: "புதிய பயனர்?",
-        registerLink: "இங்கே பதிவு செய்யவும்"
-      }
-    };
-
-    function switchLanguage() {
-      const lang = document.getElementById('language').value;
-      localStorage.setItem("preferredLang", lang); // Remember language
-
-      document.getElementById("title").innerText = translations[lang].title;
-      document.getElementById("lang-label").innerText = translations[lang].langLabel;
-      document.getElementById("label-email").innerText = translations[lang].email;
-      document.getElementById("label-password").innerText = translations[lang].password;
-      document.getElementById("submit-btn").innerText = translations[lang].submit;
-      document.getElementById("new-user").innerText = translations[lang].newUser;
-      document.getElementById("register-link").innerText = translations[lang].registerLink;
+  <meta charset="UTF-8" />
+  <title>{{ text.login }}</title>
+  
+  <style>
+    /* Reset box-sizing */
+    *, *::before, *::after {
+      box-sizing: border-box;
     }
 
-    // Auto-set preferred language on load
-    window.onload = () => {
-      const lang = localStorage.getItem("preferredLang") || "en";
-      document.getElementById("language").value = lang;
-      switchLanguage();
-    };
+    body {
+      background: #dff0d8;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
 
-    function startDictation(fieldId) {
-      const recognition = new webkitSpeechRecognition();
-      const langMap = { en: "en-IN", hi: "hi-IN", ta: "ta-IN" };
-      const selectedLang = document.getElementById("language").value;
-      recognition.lang = langMap[selectedLang] || "en-IN";
+    /* Form container */
+    form {
+      background: #f9fff7;
+      padding: 2rem 1.5rem;
+      border-radius: 12px;
+      box-shadow:
+        5px 5px 15px rgba(0, 80, 0, 0.15),
+        -5px -5px 15px rgba(144, 238, 144, 0.6);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
 
-      recognition.onresult = function(event) {
+    h2 {
+      color: #2f5d27;
+      margin-bottom: 1.5rem;
+      text-shadow: 1px 1px 0 #a3d39c;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      color: #3b6b1e;
+      margin-bottom: 0.3rem;
+      font-size: 1.1rem;
+      user-select: none;
+      text-align: left;
+    }
+
+    /* Input group flex container */
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    /* Inputs take full width minus mic button */
+    input[type="email"],
+    input[type="password"] {
+      flex: 1 1 200px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 2px solid #8cc63f;
+      box-shadow: inset 2px 2px 5px rgba(140,198,63,0.4);
+      transition: border-color 0.3s ease;
+      outline-offset: 0;
+      outline: none;
+      min-width: 0; /* prevent overflow in flex */
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: #567d1b;
+      box-shadow: 0 0 8px 2px #9edc6e;
+    }
+
+    /* Mic button */
+    button[type="button"] {
+      width: 40px;
+      height: 38px;
+      background: #a4d03b;
+      border: none;
+      border-radius: 8px;
+      box-shadow:
+        2px 2px 5px rgba(0, 90, 0, 0.3),
+        inset 1px 1px 3px rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: white;
+      transition: background 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    button[type="button"]:hover {
+      background: #81b622;
+    }
+
+    /* Submit button full width */
+    button[type="submit"] {
+      background: linear-gradient(145deg, #6abf3a, #4a7d14);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow:
+        4px 4px 6px #3e6b11,
+        -4px -4px 6px #a8df65;
+      transition: background 0.3s ease;
+      user-select: none;
+      margin-top: 10px;
+      width: 100%;
+      display: block;
+    }
+
+    button[type="submit"]:hover {
+      background: linear-gradient(145deg, #81c643, #5c8c21);
+      box-shadow:
+        6px 6px 8px #346409,
+        -6px -6px 8px #b5e072;
+    }
+
+    select {
+      margin-top: 1rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 2px solid #7db33f;
+      box-shadow: inset 2px 2px 6px rgba(124, 179, 63, 0.5);
+      font-size: 1rem;
+      cursor: pointer;
+      user-select: none;
+      background: #e9f6d6;
+      color: #3b6b1e;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin-bottom: 15px;
+    }
+
+    p {
+      margin-top: 1.5rem;
+      color: #3a6d24;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    a {
+      color: #6f9f2b;
+      text-decoration: none;
+      font-weight: 700;
+      transition: color 0.3s ease;
+    }
+
+    a:hover {
+      color: #a3d39c;
+      text-decoration: underline;
+    }
+
+    button.read-instructions {
+      background: #a4d03b;
+      border: none;
+      border-radius: 15px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      color: white;
+      cursor: pointer;
+      box-shadow:
+        2px 2px 6px rgba(0, 80, 0, 0.5),
+        inset 1px 1px 3px rgba(255, 255, 255, 0.6);
+      user-select: none;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      margin-bottom: 0;
+      transition: background 0.3s ease;
+    }
+    button.read-instructions:hover {
+      background: #81b622;
+    }
+
+    /* RESPONSIVE: On very narrow screens, stack mic button below input */
+    @media (max-width: 360px) {
+      .input-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      button[type="button"] {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.4rem;
+        height: 38px;
+      }
+      input[type="email"],
+      input[type="password"] {
+        flex: none;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>{{ text.login }}</h2>
+
+  <form action="/login" method="POST">
+    <label for="email">📧 {{ text.email }}</label>
+    <div class="input-group">
+      <input type="email" name="email" id="email" required>
+      <button type="button" onclick="startSpeech('email')">🎤</button>
+    </div>
+
+    <label for="password">🔒 {{ text.password }}</label>
+    <div class="input-group">
+      <input type="password" name="password" id="password" required>
+      <button type="button" onclick="startSpeech('password')">🎤</button>
+    </div>
+
+    <button type="submit">{{ text.login }}</button>
+  </form>
+
+  <p>{{ text.no_account }} <a href="/register">{{ text.register_here }}</a></p>
+
+  <label>{{ text.language }}</label>
+  <select onchange="changeLanguage(this.value)">
+    <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+    <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
+    <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
+  </select>
+
+  <button class="read-instructions" onclick="speakText()">
+    🔊 {{ text.read_instructions if text.read_instructions else 'Read Instructions' }}
+  </button>
+
+  <script>
+    const selectedLang = "{{ lang }}";
+
+    function changeLanguage(lang) {
+      fetch("/set_language", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang })
+      }).then(() => location.reload());
+    }
+
+    function startSpeech(fieldId) {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = selectedLang === 'hi' ? 'hi-IN' : selectedLang === 'ta' ? 'ta-IN' : 'en-IN';
+      recognition.start();
+
+      recognition.onresult = function (event) {
         document.getElementById(fieldId).value = event.results[0][0].transcript;
       };
 
-      recognition.onerror = function(event) {
-        alert("Speech recognition error: " + event.error);
+      recognition.onerror = function (event) {
+        alert('Speech recognition error: ' + event.error);
+      };
+    }
+
+    function speakText() {
+      const instructions = {
+        en: "Please enter your email and password. You can also use voice input by clicking the microphone icon.",
+        hi: "कृपया अपना ईमेल और पासवर्ड दर्ज करें। आप माइक्रोफ़ोन आइकन पर क्लिक करके आवाज़ इनपुट का उपयोग कर सकते हैं।",
+        ta: "தயவுசெய்து உங்கள் மின்னஞ்சலும் கடவுச்சொல்லையும் உள்ளிடுங்கள். 🎤 ஐ கிளிக் செய்து குரல் உள்ளீட்டை பயன்படுத்தலாம்."
       };
 
-      recognition.start();
+      const message = instructions[selectedLang] || instructions['en'];
+      const utterance = new SpeechSynthesisUtterance(message);
+
+      utterance.lang = selectedLang === 'hi' ? 'hi-IN' : selectedLang === 'ta' ? 'en-IN' : 'en-IN';
+
+      window.speechSynthesis.speak(utterance);
     }
   </script>
 </body>

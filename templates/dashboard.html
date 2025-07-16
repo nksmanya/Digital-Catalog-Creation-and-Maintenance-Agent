@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ text.dashboard_title }}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f2fef5;
+    }
+    header {
+      background: linear-gradient(145deg, #66bb6a, #558b2f);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 25px;
+      border-bottom: 3px solid #33691e;
+    }
+    .left-header h2 { margin: 0; font-size: 24px; }
+    .right-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    select, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: linear-gradient(to bottom, #6d4c41, #4e342e);
+      color: white;
+      box-shadow: 0 4px #3e2723;
+      cursor: pointer;
+    }
+    main { padding: 25px; }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    #searchBar {
+      width: 300px;
+      padding: 10px;
+      font-size: 14px;
+      border: 2px solid #a5d6a7;
+      border-radius: 6px;
+    }
+
+    #productList {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: linear-gradient(to bottom right, #ffffff, #e8f5e9);
+      border: 1px solid #c5e1a5;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .card h4 { margin: 0 0 10px; color: #2e7d32; }
+    .card p { margin: 5px 0; font-size: 14px; color: #4e342e; }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.hidden { display: none; }
+
+    .modal-content {
+      background: linear-gradient(to bottom, #ffffff, #f7fbe7);
+      padding: 20px;
+      border-radius: 12px;
+      width: 320px;
+    }
+
+    .modal-content form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-content input,
+    .modal-content textarea {
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #c8e6c9;
+      border-radius: 6px;
+    }
+
+    #chatbotBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #43a047;
+      color: white;
+      padding: 15px;
+      border-radius: 50%;
+      font-size: 18px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="left-header">
+      <h2>{{ text.dashboard_title }}</h2>
+    </div>
+    <div class="right-header">
+      <select id="langSelect" onchange="changeLanguage(this.value)">
+        <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+        <option value="hi" {% if lang == 'hi' %}selected{% endif %}>हिंदी</option>
+        <option value="ta" {% if lang == 'ta' %}selected{% endif %}>தமிழ்</option>
+      </select>
+      <div id="profile">
+        👤 <span id="userName">{{ user }}</span>
+        <a href="/logout"><button>{{ text.logout }}</button></a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="top-bar">
+      <input type="text" id="searchBar" placeholder="{{ text.search_placeholder }}" oninput="searchCatalog()" />
+      <button onclick="openAddForm()">{{ text.add_product }}</button>
+      <button onclick="exportCatalog()">{{ text.export }}</button>
+    </section>
+  
+
+
+
+    <section id="productList"></section>
+  </main>
+
+  <div id="modalContainer" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modalTitle">{{ text.add_product }}</h3>
+      <form id="productForm" onsubmit="saveProduct(event)">
+        <input type="text" id="name" placeholder="{{ text.name }}" required />
+        <textarea id="description" placeholder="{{ text.description }}" required></textarea>
+        <input type="number" id="price" placeholder="{{ text.price }}" required />
+        <input type="number" id="stock" placeholder="{{ text.stock }}" required />
+        <input type="text" id="category" placeholder="{{ text.category }}" required />
+        <label for="image">Product Image:</label>
+<input type="file" id="image" name="image" accept="image/*" />
+<button type="button" onclick="generateImage()">🎨 Generate Image</button>
+
+        <button type="button" onclick="autoFillDescription()">🤖 {{ text.auto_generate }}</button>
+        <button type="button" onclick="translateDescription()">🌐 {{ text.translate }}</button>
+
+        <button type="submit">{{ text.save }}</button>
+        <button type="button" onclick="closeModal()">{{ text.cancel }}</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Chatbot button -->
+  <a href="/chatbot">
+  <button style="background-color: #4caf50; color: white; padding: 10px 16px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;">
+    🤖 Open AI Chatbot
+  </button>
+</a>
+ <script>
+    function changeLanguage(lang) {
+      fetch("/set_language", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang })
+      }).then(() => location.reload());
+    }
+
+    async function autoFillDescription() {
+      const name = document.getElementById("name").value;
+      const category = document.getElementById("category").value;
+      if (!name || !category) return alert("{{ text.fill_name_category }}");
+      const res = await fetch("/auto_description", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, category })
+      });
+      const data = await res.json();
+      document.getElementById("description").value = data.description;
+    }
+
+    async function translateDescription() {
+      const text = document.getElementById("description").value;
+      if (!text) return alert("{{ text.enter_description_first }}");
+      const res = await fetch("/translate", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, target: "hi" })
+      });
+      const data = await res.json();
+      document.getElementById("description").value = data.translated;
+    }
+
+    let allProducts = [];
+    window.onload = fetchProducts;
+
+    function fetchProducts() {
+      fetch("/get_products")
+        .then(res => res.json())
+        .then(data => {
+          allProducts = data;
+          renderProducts(data);
+        });
+    }
+
+    function renderProducts(products) {
+      const list = document.getElementById("productList");
+      list.innerHTML = "";
+
+      if (products.length === 0) {
+        list.innerHTML = `<p>{{ text.no_products }}</p>`;
+        return;
+      }
+
+      products.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h4>${p.name}</h4>
+          <p>${p.description}</p>
+          <p>₹${p.price} | {{ text.stock }}: ${p.stock}</p>
+          <p><b>${p.category}</b></p>
+          <button onclick='editProduct(${JSON.stringify(p)})'>✏️ {{ text.edit }}</button>
+          <button onclick='deleteProduct(${p.id})'>🗑️ {{ text.delete }}</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function openAddForm() {
+      document.getElementById("productForm").reset();
+      document.getElementById("productForm").removeAttribute("data-id");
+      document.getElementById("modalTitle").textContent = "{{ text.add_product }}";
+      document.getElementById("modalContainer").classList.remove("hidden");
+    }
+
+    function closeModal() {
+      document.getElementById("modalContainer").classList.add("hidden");
+    }
+
+    function saveProduct(e) {
+      e.preventDefault();
+      const form = document.getElementById("productForm");
+      const id = form.getAttribute("data-id");
+      const data = {
+        name: document.getElementById("name").value,
+        description: document.getElementById("description").value,
+        price: parseFloat(document.getElementById("price").value),
+        stock: parseInt(document.getElementById("stock").value),
+        category: document.getElementById("category").value
+      };
+      const url = id ? `/edit_product/${id}` : "/add_product";
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      }).then(() => {
+        fetchProducts();
+        closeModal();
+      });
+    }
+
+    function editProduct(product) {
+      document.getElementById("modalTitle").textContent = "{{ text.edit_product }}";
+      document.getElementById("name").value = product.name;
+      document.getElementById("description").value = product.description;
+      document.getElementById("price").value = product.price;
+      document.getElementById("stock").value = product.stock;
+      document.getElementById("category").value = product.category;
+
+      document.getElementById("productForm").setAttribute("data-id", product.id);
+      document.getElementById("modalContainer").classList.remove("hidden");
+    }
+
+    function deleteProduct(id) {
+      if (confirm("{{ text.confirm_delete }}")) {
+        fetch(`/delete_product/${id}`, {
+          method: "DELETE"
+        }).then(() => fetchProducts());
+      }
+    }
+
+    function exportCatalog() {
+      window.location.href = "/export_catalog";
+    }
+
+    function searchCatalog() {
+      const query = document.getElementById("searchBar").value.toLowerCase();
+      const filtered = allProducts.filter(p =>
+        p.name.toLowerCase().includes(query) ||
+        p.description.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query)
+      );
+      renderProducts(filtered);
+    }
+
+    function startChatbot() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-IN";
+      recognition.start();
+
+      recognition.onresult = function (event) {
+        const userSpeech = event.results[0][0].transcript;
+        fetch("/chatbot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userSpeech })
+        })
+        .then(res => res.json())
+        .then(data => {
+          const reply = data.reply;
+          const msg = new SpeechSynthesisUtterance(reply);
+          msg.lang = "en-IN";
+          speechSynthesis.speak(msg);
+        });
+      };
+    }
+  </script>
+  <script>
+  const chatbotReplies = {
+    en: {
+      "hello": "Hello! How can I help you today?",
+      "add product": "Click on 'Add Product' to start adding.",
+      "logout": "Click on the logout button on the top right.",
+    },
+    hi: {
+      "नमस्ते": "नमस्ते! मैं आपकी कैसे मदद कर सकती हूँ?",
+      "उत्पाद जोड़ें": "'Add Product' पर क्लिक करें।",
+      "लॉगआउट": "ऊपर दाईं ओर लॉगआउट पर क्लिक करें।",
+    },
+    ta: {
+      "வணக்கம்": "வணக்கம்! உங்களுக்கு எப்படி உதவலாம்?",
+      "பொருள் சேர்க்க": "'Add Product' பொத்தானை கிளிக் செய்யவும்.",
+      "வெளியேறு": "மேல் வலதுபுறம் உள்ள Logout பொத்தானை அழுத்தவும்.",
+    }
+  };
+
+  function startChat() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    const langCode = document.getElementById("langSelect").value;
+    recognition.lang = {
+      en: "en-IN", hi: "hi-IN", ta: "ta-IN"
+    }[langCode] || "en-IN";
+
+    recognition.start();
+
+    recognition.onresult = function (event) {
+      const userInput = event.results[0][0].transcript.trim().toLowerCase();
+      const response = getChatbotResponse(userInput, langCode);
+      document.getElementById("chatOutput").textContent = `🗣️ ${userInput}\n🤖 ${response}`;
+      speakText(response, langCode);
+    };
+  }
+
+  function getChatbotResponse(input, lang) {
+    const responses = chatbotReplies[lang] || {};
+    for (const key in responses) {
+      if (input.includes(key)) return responses[key];
+    }
+    return {
+      en: "Sorry, I didn’t understand.",
+      hi: "माफ़ कीजिए, मैं समझ नहीं पाई।",
+      ta: "மன்னிக்கவும், புரியவில்லை.",
+    }[lang];
+  }
+
+  function speakText(text, lang) {
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = {
+      en: "en-IN", hi: "hi-IN", ta: "ta-IN"
+    }[lang] || "en-IN";
+    speechSynthesis.speak(msg);
+  }
+  function saveProduct(e) {
+  e.preventDefault();
+  const form = document.getElementById("productForm");
+  const id = form.getAttribute("data-id");
+
+  // Use FormData to send file + other fields
+  const formData = new FormData();
+  formData.append("name", document.getElementById("name").value);
+  formData.append("description", document.getElementById("description").value);
+  formData.append("price", parseFloat(document.getElementById("price").value));
+  formData.append("stock", parseInt(document.getElementById("stock").value));
+  formData.append("category", document.getElementById("category").value);
+
+  const imageFile = document.getElementById("image").files[0];
+  if (imageFile) {
+    formData.append("image", imageFile);
+  }
+
+  const url = id ? `/edit_product/${id}` : "/add_product";
+
+  fetch(url, {
+    method: "POST",
+    body: formData // Important: no content-type, browser sets it automatically for FormData
+  }).then(() => {
+    fetchProducts();
+    closeModal();
+  });
+}
+function loadProducts() {
+  fetch('/api/products')
+    .then(res => res.json())
+    .then(data => {
+      if (data.products && data.products.length > 0) {
+        let html = '<ul>';
+        data.products.forEach(p => {
+          html += `<li><b>${p.name}</b> — ${p.description} | ₹${p.price} | Stock: ${p.stock} | Category: ${p.category}</li>`;
+        });
+        html += '</ul>';
+        document.getElementById('productList').innerHTML = html;
+      } else {
+        document.getElementById('productList').textContent = 'No products added yet.';
+      }
+    })
+    .catch(() => {
+      document.getElementById('productList').textContent = 'Failed to load products.';
+    });
+}
+
+}
+fetch('/add_product', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'  // Important!
+  },
+  body: JSON.stringify({
+    name: newProduct.name,
+    description: newProduct.description,
+    price: parseFloat(newProduct.price) || 0,
+    stock: parseInt(newProduct.stock) || 0,
+    category: newProduct.category,
+    imageBase64: newProduct.imageBase64 || null // if you have imageBase64 data
+  })
+})
+
+</script>
+
+</body>
+</html>
