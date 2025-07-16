@@ -8,7 +8,8 @@
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background: #f2fef5;
+      background: url('/static/gren.png') no-repeat center center fixed;
+      background-size: cover;
     }
     header {
       background: linear-gradient(145deg, #66bb6a, #558b2f);
@@ -17,7 +18,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 15px 25px;
-      border-bottom: 3px solid #33691e;
+      border-bottom: 3px solid #171817;
     }
     .left-header h2 { margin: 0; font-size: 24px; }
     .right-header {
@@ -299,10 +300,27 @@
         }).then(() => fetchProducts());
       }
     }
+function exportCatalog() {
+  fetch("/get_products")
+    .then(res => res.json())
+    .then(data => {
+      const jsonStr = JSON.stringify(data, null, 2); // pretty print
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
 
-    function exportCatalog() {
-      window.location.href = "/export_catalog";
-    }
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "catalog.json"; // name of the downloaded file
+      a.click();
+
+      URL.revokeObjectURL(url); // cleanup
+    })
+    .catch(err => {
+      console.error("Export failed:", err);
+      alert("Failed to export catalog.");
+    });
+}
+
 
     function searchCatalog() {
       const query = document.getElementById("searchBar").value.toLowerCase();
@@ -439,7 +457,7 @@ function loadProducts() {
     });
 }
 
-}
+
 fetch('/add_product', {
   method: 'POST',
   headers: {
